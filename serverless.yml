@@ -1,0 +1,53 @@
+service:
+  name: hello-step-functions
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-step-functions
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  profile: vlado
+  region: us-east-1
+
+functions:
+  firstState:
+    handler: handler.firstState
+  lastState:
+    handler: handler.lastState
+
+stepFunctions:
+  stateMachines:
+    yourChoiceMachine:
+      definition:
+        Comment: "An example of the Amazon States Language using a choice state."
+        StartAt: FirstState
+        States:
+          FirstState:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [firstState, Arn]
+            Next: ChoiceState
+          ChoiceState:
+            Type: Choice
+            Choices:
+            - Variable: "$.foo"
+              NumericEquals: 1
+              Next: FirstState
+            - Variable: "$.foo"
+              NumericEquals: 2
+              Next: NextState
+            Default: NextState
+          NextState:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [lastState, Arn]
+            End: true
